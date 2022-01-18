@@ -20,6 +20,7 @@ public class Server {
     private List<ClientHandler> clients;
     private AuthService authService;
 
+
     public Server() {
         clients = new CopyOnWriteArrayList<>();
         authService = new SimpleAuthService();
@@ -58,6 +59,19 @@ public class Server {
         for (ClientHandler c : clients) {
             c.sendMsg(message);
         }
+    }
+
+    public void privateMsg(ClientHandler sender, String recipient, String msg) {
+        boolean success = false; // т.к. нет проверки на уникальность никнеймов, это позволит пройти весь цикл и отправить всем с таким никнейном; иначе можно было бы поставить break или return, чтобы не гонять цикл до конца при совпадении.
+        sender.sendMsg("Whispered to [ " + recipient + " ]: " + msg);
+        String message = String.format("Whisper from [ %s ]: %s", sender.getNickname(), msg);
+        for (ClientHandler c : clients) {
+            if (c.getNickname().equals(recipient) && c != sender) {
+                c.sendMsg(message);
+                success = true;
+            }
+        }
+        if (!success) {sender.sendMsg("Server: no such recipient");}
     }
 
     public AuthService getAuthService() {
